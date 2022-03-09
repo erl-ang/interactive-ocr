@@ -8,6 +8,9 @@ from PIL import Image
 import pytesseract
 import cv2
 
+# found a temp file method to work with cv2
+import tempfile
+
 
 # global vars for site copy
 MAIN_TITLE_TEXT = 'Inspecting Text Quality of OCR\n'
@@ -17,7 +20,7 @@ DET_ARCHS = ['Tesseract', 'Other OCR Method to test', 'EasyOCR']
 NER_ARCHS = ["filler1", "filler2", "filler3"]
 
 # testing
-TEST_IMAGE_PATH = "plain_text.png"
+TEST_IMAGE_PATH = "test_images/plain_text.png"
 
 def main():
 	# Wide mode
@@ -27,11 +30,13 @@ def main():
 	st.write(TITLE_DESCRIPTION)
 	st.subheader("Uploaded Image")
 
-	# Sidebar
+	"""Sidebar"""
 	# File selection
 	st.sidebar.title("Image selection")
+
 	# Disabling warning
 	st.set_option('deprecation.showfileUploaderEncoding', False)
+
 	# Choose your own image
 	uploaded_file = st.sidebar.file_uploader("Upload files", type=None)
 
@@ -46,13 +51,16 @@ def main():
 		st.subheader("Text Extracted")
 		st.info('Please Upload an image')
 
-	else:
+	else: # use uploaded a file
 		with st.container():
 			# Displaying markdown instead
 			# pdf_html = get_pdf_html_iframe(uploaded_file)
 
-			# how to get path ???
-			image = cv2.imread(TEST_IMAGE_PATH, cv2.IMREAD_COLOR)
+			# how to get path 
+			# image = cv2.imread(TEST_IMAGE_PATH, cv2.IMREAD_COLOR)
+			tfile = tempfile.NamedTemporaryFile(delete=True)
+			tfile.write(uploaded_file.read())
+			image = cv2.imread(tfile.name, cv2.IMREAD_COLOR)
 			st.image(image)
 				
 			# st.write(pdf_html, unsafe_allow_html=True)
@@ -64,8 +72,9 @@ def main():
 		with test_extracted_expander:
 
 			# grayscale image to improve processing
-			img = Image.open(TEST_IMAGE_PATH).convert("L")
-			
+			# for image paths 
+			img = Image.open(tfile.name).convert("L")
+			# img = Image.open().convert("L")
 			ret,img = cv2.threshold(np.array(img), 90, 400, cv2.THRESH_BINARY)
 			img = Image.fromarray(img.astype(np.uint8))
 			st.image(img)
