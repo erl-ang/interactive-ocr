@@ -1,12 +1,11 @@
 import streamlit as st
-import base64
 import pandas as pd
 import numpy as np
 
 # file processing packages
+import base64
 from pdf2image import convert_from_path
 import tempfile
-import io
 
 # ocr packages
 from PIL import Image
@@ -29,49 +28,39 @@ def main():
 	st.set_page_config(layout="centered")
 	st.title(MAIN_TITLE_TEXT)
 	st.write(TITLE_DESCRIPTION)
+
+	# File selection UI
+	st.sidebar.title("File Selection")
 	st.subheader("Uploaded Image")
+	uploaded_file = st.sidebar.file_uploader("Upload a File",type=None)
+	st.set_option('deprecation.showfileUploaderEncoding', False) # Disabling warning
 
-	# File selection
-	st.sidebar.title("Image selection")
-
-	# Disabling warning
-	st.set_option('deprecation.showfileUploaderEncoding', False)
-
-	# Choose your own image
-	uploaded_file = st.sidebar.file_uploader("Upload files", type=None)
-
+	# TODO: find min_value, max_value of the file,
+	st.sidebar.subheader("Enter Page Range")
+	col1, col2 = st.sidebar.columns(2)
+	fpage_idx = col1.text_input("First Page")
+	lpage_idx = col2.text_input("Last Page")
+	
 	# Model selection -- setting up UI for future use
 	st.sidebar.title("Model selection")
-	det_arch = st.sidebar.selectbox("OCR Method", DET_ARCHS)
+	# page_idx = st.sidebar.selectbox("First Page", [idx + 1 for idx in range(ppdf_reader.numPages)]) - 1
 	ner_arch = st.sidebar.selectbox("NER Model", NER_ARCHS)
-	button = st.sidebar.button("Analyze Page")
+	button = st.sidebar.button("Extract Text")
 
 	if uploaded_file is None:
-		st.info('Please upload an image')
+		st.info('Please upload a file')
 		st.subheader("Text Extracted")
-		st.info('Please Upload an image')
+		st.info('Please Upload a file')
 
 	else: # use uploaded a file
 		with st.container():
-			# Displaying markdown instead
-			# pdf_html = get_pdf_html_iframe(uploaded_file)
-
-			# how to get path 
-			# image = cv2.imread(TEST_IMAGE_PATH, cv2.IMREAD_COLOR)
-
-
 			# uploaded pdf -> temporary file -> image
 			tfile = tempfile.NamedTemporaryFile(delete=False)
 			tfile.write(uploaded_file.read())
-			image = convert_from_path(tfile.name) # in-memory image
+			image = convert_from_path(tfile.name, first_page=int(fpage_idx), last_page=int(lpage_idx)) # in-memory image
 
 			# select a range of pages to do text processing on
 			# image[0]
-
-			# testing
-			timage = tempfile.NamedTemporaryFile(delete=False)
-			timage.write(image[0].tobytes())
-			test_img = cv2.imread(timage.name,0)
 
 			# display
 			st.image(image)
@@ -94,6 +83,7 @@ def main():
 			st.image(img) # display grayscaled image
 
 			extracted_text = pytesseract.image_to_string(img, config='--psm 7 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyz, 0123456789.%', lang="eng")
+			st.write(type(extracted_text))
 
 			st.write(extracted_text)
 			st.write('\n')
@@ -110,24 +100,6 @@ def main():
 	# For newline
 	st.sidebar.write('\n')
 
-
-def get_html(html: str):
-    """
-    Convert HTML so it can be rendered.
-    """
-    WRAPPER = """<div style="overflow-x: auto; border: 1px solid #e6e9ef; border-radius: 0.25rem; padding: 1rem; margin-bottom: 2.5rem">{}</div>"""
-    # Newlines seem to mess with the rendering
-    html = html.replace("\n", " ")
-    formatted_html = WRAPPER.format(html)
-    styled_html = "<style>mark.entity { display: inline-block }</style>" + formatted_html
-    return styled_html
-
-def get_pdf_html_iframe(file):
-	base64_pdf = base64.b64encode(file.read()).decode('utf-8')
-	pdf_html_iframe = f'<iframe src="data:application/pdf;base64,{base64_pdf}"\
-			 width="700" height="400" type="application/pdf">\
-			</iframe>'
-	return pdf_html_iframe
 
 if __name__ == '__main__':
     main()
