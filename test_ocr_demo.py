@@ -3,16 +3,18 @@ import base64
 import pandas as pd
 import numpy as np
 
-# ocr
+# file processing packages
+from pdf2image import convert_from_path
+import tempfile
+import io
+
+# ocr packages
 from PIL import Image
 import pytesseract
 import cv2
 
-# found a temp file method to work with cv2
-import tempfile
 
-
-# global vars for site copy
+# site copy
 MAIN_TITLE_TEXT = 'Inspecting Text Quality of OCR\n'
 TITLE_DESCRIPTION = '*Built for http://history-lab.org/*\n'
 
@@ -25,12 +27,10 @@ TEST_IMAGE_PATH = "test_images/plain_text.png"
 def main():
 	# Wide mode
 	st.set_page_config(layout="centered")
-	# Designing the interface
 	st.title(MAIN_TITLE_TEXT)
 	st.write(TITLE_DESCRIPTION)
 	st.subheader("Uploaded Image")
 
-	"""Sidebar"""
 	# File selection
 	st.sidebar.title("Image selection")
 
@@ -58,11 +58,23 @@ def main():
 
 			# how to get path 
 			# image = cv2.imread(TEST_IMAGE_PATH, cv2.IMREAD_COLOR)
-			tfile = tempfile.NamedTemporaryFile(delete=True)
+
+
+			# uploaded pdf -> temporary file -> image
+			tfile = tempfile.NamedTemporaryFile(delete=False)
 			tfile.write(uploaded_file.read())
-			image = cv2.imread(tfile.name, cv2.IMREAD_COLOR)
+			image = convert_from_path(tfile.name) # in-memory image
+
+			# select a range of pages to do text processing on
+			# image[0]
+
+			# testing
+			timage = tempfile.NamedTemporaryFile(delete=False)
+			timage.write(image[0].tobytes())
+			test_img = cv2.imread(timage.name,0)
+
+			# display
 			st.image(image)
-				
 			# st.write(pdf_html, unsafe_allow_html=True)
 			st.markdown("---")
 
@@ -72,12 +84,14 @@ def main():
 		with test_extracted_expander:
 
 			# grayscale image to improve processing
-			# for image paths 
-			img = Image.open(tfile.name).convert("L")
-			# img = Image.open().convert("L")
-			ret,img = cv2.threshold(np.array(img), 90, 400, cv2.THRESH_BINARY)
+			# for image files
+			# img = Image.open(timage.name).convert("L")
+			# ret,img = cv2.threshold(np.array(img), 90, 400, cv2.THRESH_BINARY)
+
+			# testing
+			ret,img = cv2.threshold(np.array(image[0]), 90, 400, cv2.THRESH_BINARY)
 			img = Image.fromarray(img.astype(np.uint8))
-			st.image(img)
+			st.image(img) # display grayscaled image
 
 			extracted_text = pytesseract.image_to_string(img, config='--psm 7 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyz, 0123456789.%', lang="eng")
 
@@ -89,7 +103,8 @@ def main():
 		with st.container():
 			
 			# tokenize text
-			st.write("filler")
+			st.write("[filler]")
+			st.write("[\% garbled text]")
 			
 
 	# For newline
@@ -106,8 +121,6 @@ def get_html(html: str):
     formatted_html = WRAPPER.format(html)
     styled_html = "<style>mark.entity { display: inline-block }</style>" + formatted_html
     return styled_html
-
-
 
 def get_pdf_html_iframe(file):
 	base64_pdf = base64.b64encode(file.read()).decode('utf-8')
