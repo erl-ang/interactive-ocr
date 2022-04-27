@@ -13,6 +13,7 @@ import tempfile
 from PIL import Image
 import pytesseract
 import cv2
+from pdf import improvingOCR # for evaluation
 
 # site copy
 MAIN_TITLE_TEXT = 'Interactive OCR Evaluation\n'
@@ -57,16 +58,17 @@ def main():
 		render_landing_layout()
 
 	else: # use uploaded a file
-		st.subheader("Uploaded File")
-		with st.expander("File", expanded=True):
+		main_col1, main_col2 = st.columns(2)
+		main_col1.subheader("Uploaded File")
+		
+		with main_col1.expander("File", expanded=True):
 			images = get_images_from_upload(uploaded_file, start, end)
 			st.image(images)
 		
-		st.markdown("---")
 
 		# attempt to extract text
-		st.subheader("Image Pre-Processing")
-		with st.expander("Pre-Processing Results", expanded=True):
+		main_col2.subheader("Image Pre-Processing")
+		with main_col2.expander("Pre-Processing Results", expanded=True):
 			imgs = grayscale_images(start, end, images, thresh_val, max_val)
 			imgs = PIL_to_np(start, end, imgs)
 			imgs = denoise_images(start, end, imgs, denoise_selection)
@@ -75,11 +77,14 @@ def main():
 		st.markdown("---")
 
 		st.subheader("Text Extraction")
+		
+
 		with st.expander("Text from Pre-Processed Image", expanded=True):
 
 			# refactor later
+			extracted_text = ""
 			for page_idx in range(start-1, end):
-				extracted_text = pytesseract.image_to_string(imgs[page_idx], config=tess_config, lang="eng")
+				extracted_text += pytesseract.image_to_string(imgs[page_idx], config=tess_config, lang="eng")
 				if extracted_text == "":
 					st.info("No Tesseract output :( Try tweaking more parameters!")
 					break
@@ -90,7 +95,11 @@ def main():
 		st.markdown("---")
 		st.subheader("OCR Text Quality")
 		with st.container():
-			st.info("Coming soon!")
+			text_file = open("ocr_text.txt", "w")
+			text_file.write(extracted_text)
+			text_file.close()
+			result_df = improvingOCR.garbageDetector("ocr_text.txt")
+			st.dataframe(result_df)
 		
 		st.markdown("---")
 
