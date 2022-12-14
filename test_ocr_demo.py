@@ -15,6 +15,8 @@ from PIL import Image
 import pytesseract
 import cv2
 from pdf import improvingOCR # for evaluation
+from dinglehop.word_error_rate import *
+from dinglehop.character_error_rate import *
 
 
 # site copy
@@ -111,6 +113,27 @@ def main():
 
 			st.write("Garbage Words:")
 			st.dataframe(garbage_df)
+		
+		st.write("\n\n")
+		gt_text = st.file_uploader("Upload Ground Truth Text File",type=['txt'])
+
+		with st.expander("Dinglehopper Results", expanded=True):
+			if gt_text is not None:
+				gt_str = gt_text.read().decode()
+				wer, n_words = word_error_rate_n(gt_str, extracted_text)
+				cer, nc_words = character_error_rate_n(gt_str, extracted_text)
+				#gt_words = words_normalized(extracted_text)
+				#ocr_words = words_normalized(extracted_text)
+
+				
+				st.write("OCR Quality Summary:")
+				st.write("test")
+				st.write("WER: " + str(wer))
+				st.write("CER: " + str(cer))
+				st.write("n_words: " + str(n_words))
+				st.write("nc_words: " + str(nc_words))
+				#st.write("gt_words: " + str(gt_words))
+				#st.write("ocr_words: " + str(ocr_words))
 		
 		st.write("\n\n")
 
