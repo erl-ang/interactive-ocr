@@ -1,5 +1,5 @@
 #!/bin/bash
-for f in ds_pdfs/*.pdf; do
+for f in test_pdfs/*.pdf; do
 	echo $f
 	echo $(basename "$f" .pdf)
 	gs -dBATCH -dNOPAUSE -sDEVICE=pnggray -r300 -dTextAlphaBits=4 -sOutputFile="tmp/$(basename "$f" .pdf)-%03d.png" $f  -c quit

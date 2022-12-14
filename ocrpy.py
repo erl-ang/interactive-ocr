@@ -1,8 +1,10 @@
 description = "Script to augment League of Nations images"
-import cv2, os
+import os
 import numpy as np
+
 import argparse
 from argparse import RawTextHelpFormatter
+import cv2
 from PIL import Image
 
 #img_path='tmp/GPO-CRECB-1920-pt3-v59-11-1-004.png'
