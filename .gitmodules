@@ -1,0 +1,3 @@
+[submodule "lang_confidence/langid.py"]
+	path = lang_confidence/langid.py
+	url = git@github.com:saffsd/langid.py.git
