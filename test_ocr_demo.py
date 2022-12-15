@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import copy
 import requests
+import os
 
 # file processing packages
 import base64
@@ -17,6 +18,7 @@ import cv2
 from pdf import improvingOCR # for evaluation
 from dinglehop.word_error_rate import *
 from dinglehop.character_error_rate import *
+from lang_confidence.lang_id import *
 
 
 # site copy
@@ -115,6 +117,20 @@ def main():
 			st.dataframe(garbage_df)
 		
 		st.write("\n\n")
+
+		with st.expander("OCR Quality: Language Confidence Results", expanded=True):
+			st.write("OCR Quality Summary:")
+
+			if os.path.exists("/Users/maximovich/interactive-ocr/ocr_text.txt"): 
+				confidence = getConf()
+				st.write(confidence)
+				st.write("Language Confidence (en):" + str(confidence))
+
+			else:
+				st.write("Waiting for Tesseract...")
+		
+		st.write("\n\n")
+
 		gt_text = st.file_uploader("Upload Ground Truth Text File",type=['txt'])
 
 		with st.expander("Dinglehopper Results", expanded=True):
