@@ -127,11 +127,11 @@ def main():
 
 				
 				st.write("OCR Quality Summary:")
-				st.write("test")
+				#st.write("test")
 				st.write("WER: " + str(wer))
 				st.write("CER: " + str(cer))
-				st.write("n_words: " + str(n_words))
-				st.write("nc_words: " + str(nc_words))
+				st.write("word count: " + str(n_words))
+				st.write("character count: " + str(nc_words))
 				#st.write("gt_words: " + str(gt_words))
 				#st.write("ocr_words: " + str(ocr_words))
 		
