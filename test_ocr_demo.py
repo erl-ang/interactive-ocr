@@ -15,10 +15,14 @@ import tempfile
 from PIL import Image
 import pytesseract
 import cv2
+
+# ocr evaluation packages
 from pdf import improvingOCR # for evaluation
 from dinglehop.word_error_rate import *
 from dinglehop.character_error_rate import *
 from lang_confidence.lang_id import *
+# import enchant
+from spellchecker import SpellChecker
 
 
 # site copy
@@ -144,7 +148,6 @@ def main():
 
 			# refactor later
 			result_df = pd.DataFrame()
-			conf_df = pd.DataFrame()
 			for page_idx in range(start-1, end):
 				text1 = pytesseract.image_to_data(imgs[page_idx], config=tess_config, lang="eng", output_type='data.frame')
 				text_data = text1[text1.conf != -1] # remove all rows with no confidence values
@@ -154,6 +157,41 @@ def main():
 			st.write("Mean word confidence: " + str(result_df['conf'].mean()))
 			st.dataframe(result_df)
 			# TODO: control flow for no tesseract output
+		
+		st.write("\n\n")
+
+		with st.expander("Simple Dictionary Checking", expanded=True):
+			st.write("Approximates OCR quality via dictionary checking. The [enchant dictionary](https://pyenchant.github.io/pyenchant/tutorial.html) is used. **What percent of the total words are in the dictionary?**")
+			st.write("Derived from Alex et. al's Simple Quality Score in [*Estimating and Rating the Quality of Optically Character Recognised Text*](https://dl.acm.org/doi/pdf/10.1145/2595188.2595214?casa_token=j0lV_LEjZHMAAAAA:_Bntc_y9aMmc7pbYUSVlEIPtrqC_ZyP5x0w9WsOpqTUdtjv9bTaDYNM1PT3oe0Oj--g8l7aKXG8dMw)")
+
+			st.write("\n\n")
+			# TODO: resolve enchant issues. pyspellchecker is ok for now
+			spell = SpellChecker()
+			# d = enchant.Dict("en_US")
+			W_good = 0
+			W_all = 1 # initialize to 1 to avoid dividing by 0
+
+			# TODO: refactor
+			misspelled_list = []
+			count = 0
+			for word in extracted_text:
+				count +=1
+				W_all +=1
+				if word.isspace(): # skip whitespace
+					continue
+				if spell[word]:
+					W_good +=1
+				else:
+					misspelled_list.append(word)
+			misspelled_df = pd.Series(misspelled_list).to_frame()
+			score = W_good / W_all
+
+			st.write("Simple Quality Score: " + str(score))
+			st.write("Word Count: " + str(count))
+			st.write("Num Misspelled Words: " + str(W_good))
+			st.write("Misspelled Words: ")
+			st.dataframe(misspelled_df)
+			
 		
 		st.write("\n\n")
 
