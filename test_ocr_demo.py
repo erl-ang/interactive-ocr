@@ -122,7 +122,7 @@ def main():
 			st.write("OCR Quality Summary:")
 
 			if os.path.exists("/Users/maximovich/interactive-ocr/ocr_text.txt"): 
-				confidence = getConf()
+				confidence = getConf().decode()
 				st.write(confidence)
 				st.write("Language Confidence (en):" + str(confidence))
 
