@@ -174,7 +174,7 @@ def main():
 			# TODO: refactor
 			misspelled_list = []
 			count = 0
-			for word in extracted_text:
+			for word in extracted_text.split():
 				count +=1
 				W_all +=1
 				if word.isspace(): # skip whitespace
@@ -184,7 +184,7 @@ def main():
 				else:
 					misspelled_list.append(word)
 			misspelled_df = pd.Series(misspelled_list).to_frame()
-			score = W_good / W_all
+			score = 1 - (W_good / W_all)
 
 			st.write("Simple Quality Score: " + str(score))
 			st.write("Word Count: " + str(count))
