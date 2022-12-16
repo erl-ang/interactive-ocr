@@ -75,7 +75,7 @@ def main():
 		
 
 		# attempt to extract text
-		main_col2.subheader("Image Preprocessing")
+		main_col2.subheader("Preprocessed Image")
 		with main_col2.expander("Preprocessing Results", expanded=True):
 			if thresh_method == "Simple":
 				imgs = grayscale_images(start, end, images, thresh_val, max_val)
@@ -88,6 +88,7 @@ def main():
 		st.markdown("---")
 
 		st.subheader("Text Extraction")
+		st.write("*Runs Tesseract with the specified parameters*")
 		
 		with st.expander("Text from Pre-Processed Image", expanded=False):
 
@@ -105,45 +106,71 @@ def main():
 		
 		st.markdown("---")
 		st.subheader("OCR Text Quality")
-		with st.expander("OCR Results", expanded=True):
+		st.write("*There is no standard consensus of how OCR quality should be measured. Below are a few metrics that approximate the quality of OCR. Expand each section to learn more about the metric.*")
+
+		with st.expander("Garbageness Score", expanded=True):
+			st.write("Approximates OCR quality via a \"garbageness\" score. **What percent of the total words are garbage?**")
+			st.write("Derived from Wudtke et. al, [*Recognizing Garbage in OCR Output on Historical Documents*](https://dl.acm.org/doi/pdf/10.1145/2034617.2034626)")
+
+			# save the tesseract output to a txt file
 			text_file = open("ocr_text.txt", "w")
 			text_file.write(extracted_text)
 			text_file.close()
 			summary_df, garbage_df = improvingOCR.garbageDetector("ocr_text.txt")
-			st.write("OCR Quality Summary:")
+			st.write("**OCR Quality Summary:**")
 			st.dataframe(summary_df)
 
-			st.write("Garbage Words:")
+			st.write("**Garbage Words:**")
 			st.dataframe(garbage_df)
 		
 		st.write("\n\n")
 
-		with st.expander("OCR Quality: Language Confidence Results", expanded=True):
-			st.write("OCR Quality Summary:")
+		with st.expander("Language Confidence", expanded=True):
+			st.write("Approximates OCR quality via a Language Confidence score as measured by [langid](https://github.com/saffsd/langid.py/tree/master/langid). **How confident are we that the result of the OCR output is in English?**")
+			st.write("Derived from Baumann's [*Automatic evaluation of OCR quality*](https://ryanfb.github.io/etc/2015/03/16/automatic_evaluation_of_ocr_quality.html)")
 
-			if os.path.exists("/Users/maximovich/interactive-ocr/ocr_text.txt"): 
-				confidence = getConf()
-				st.write(confidence)
-				st.write("Language Confidence (en):" + str(confidence))
+			if os.path.exists("./ocr_text.txt"): 
+				confidence = getConf().decode()
+				st.write("Language Confidence (en): " + str(confidence))
 
 			else:
 				st.write("Waiting for Tesseract...")
 		
 		st.write("\n\n")
 
-		gt_text = st.file_uploader("Upload Ground Truth Text File",type=['txt'])
+		with st.expander("Mean Word Confidence", expanded=True):
+			st.write("Approximates OCR quality via a mean word confidence score as measured by [pytesseract](https://pypi.org/project/pytesseract/#:~:text=%23%20Get%20verbose%20data%20including%20boxes%2C%20confidences%2C%20line%20and%20page%20numbers%0Aprint(pytesseract.image_to_data(Image.open(%27test.png%27)))). **How confident is the OCR Engine that the word is this word?**")
+			st.write("Modified from Springmann et. al's [*Automatic quality evaluation and (semi-) automatic improvement of OCR models for historical printings*](https://arxiv.org/abs/1606.05157)")
 
-		with st.expander("Dinglehopper Results", expanded=True):
+			# refactor later
+			result_df = pd.DataFrame()
+			conf_df = pd.DataFrame()
+			for page_idx in range(start-1, end):
+				text1 = pytesseract.image_to_data(imgs[page_idx], config=tess_config, lang="eng", output_type='data.frame')
+				text_data = text1[text1.conf != -1] # remove all rows with no confidence values
+				result_df = result_df.append(text_data[['conf', 'text']])
+			
+			st.write("\n\n")
+			st.write("Mean word confidence: " + str(result_df['conf'].mean()))
+			st.dataframe(result_df)
+			# TODO: control flow for no tesseract output
+		
+		st.write("\n\n")
+
+		with st.expander("Word and Character Error Rates", expanded=True):
+			st.write("Approximates OCR quality via word error rate (WER) and character error rate (CER) calculated by comparing against Ground Truth data.")
+			st.write("Derived from The Quator Project's open-source tool, [*dinglehopper*](https://github.com/qurator-spk/dinglehopper).")
+
+			gt_text = st.file_uploader("Upload Ground Truth Text File",type=['txt'])
+			st.write("\n\n")
 			if gt_text is not None:
 				gt_str = gt_text.read().decode()
 				wer, n_words = word_error_rate_n(gt_str, extracted_text)
 				cer, nc_words = character_error_rate_n(gt_str, extracted_text)
 				#gt_words = words_normalized(extracted_text)
 				#ocr_words = words_normalized(extracted_text)
-
 				
-				st.write("OCR Quality Summary:")
-				#st.write("test")
+				st.write("**Word and Character Error Rates Summary:**")
 				st.write("WER: " + str(wer))
 				st.write("CER: " + str(cer))
 				st.write("word count: " + str(n_words))
@@ -153,7 +180,11 @@ def main():
 		
 		st.write("\n\n")
 
-		st.write("Comparison to FOIArchive Quality")
+		st.markdown("---")
+
+		st.subheader("OCR Quality - Internal Testing")
+		st.write("**Comparison to FOIArchive Quality**")
+		st.write("*Calculates the garbageness score of a body text from the FOIArchive*")
 		source_url = st.text_input("URL to FOIArchive PDF", value=DEFAULT_URL, help=COMPARE_HELP)
 		
 		with st.expander("Comparison to FOIArchive Docs", expanded=True):
