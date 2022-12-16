@@ -144,7 +144,6 @@ def main():
 
 			# refactor later
 			result_df = pd.DataFrame()
-			conf_df = pd.DataFrame()
 			for page_idx in range(start-1, end):
 				text1 = pytesseract.image_to_data(imgs[page_idx], config=tess_config, lang="eng", output_type='data.frame')
 				text_data = text1[text1.conf != -1] # remove all rows with no confidence values
@@ -154,6 +153,14 @@ def main():
 			st.write("Mean word confidence: " + str(result_df['conf'].mean()))
 			st.dataframe(result_df)
 			# TODO: control flow for no tesseract output
+		
+		st.write("\n\n")
+
+		with st.expander("Simple Dictionary Checking", expanded=True):
+			st.write("Approximates OCR quality via dictionary checking. The [enchant dictionary]() is used. **What percent of the total words are in the dictionary?**")
+			st.write("Derived from Alex et. al's Simple Quality Score in [*Estimating and Rating the Quality of Optically Character Recognised Text*](https://dl.acm.org/doi/pdf/10.1145/2595188.2595214?casa_token=j0lV_LEjZHMAAAAA:_Bntc_y9aMmc7pbYUSVlEIPtrqC_ZyP5x0w9WsOpqTUdtjv9bTaDYNM1PT3oe0Oj--g8l7aKXG8dMw)")
+
+			
 		
 		st.write("\n\n")
 
