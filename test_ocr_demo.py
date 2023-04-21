@@ -70,24 +70,13 @@ def main():
 		render_landing_layout()
 
 	else: # use uploaded a file
-		main_col1, main_col2 = st.columns(2)
-		main_col1.subheader("Uploaded File")
+		st.subheader("Uploaded File")
 		
-		with main_col1.expander("File", expanded=True):
+		with st.expander("File", expanded=True):
 			images = get_images_from_upload(uploaded_file, start, end)
 			st.image(images)
-		
-
-		# attempt to extract text
-		main_col2.subheader("Preprocessed Image")
-		with main_col2.expander("Preprocessing Results", expanded=True):
-			if thresh_method == "Simple":
-				imgs = grayscale_images(start, end, images, thresh_val, max_val)
-			elif thresh_method == "None":
-				imgs = no_threshold_images(start, end, images)
-			imgs = PIL_to_np(start, end, imgs)
-			imgs = denoise_images(start, end, imgs, denoise_selection)
-			st.image(imgs)
+   
+		imgs = no_threshold_images(start, end, images)
 
 		st.markdown("---")
 
