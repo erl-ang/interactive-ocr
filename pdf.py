@@ -7,111 +7,123 @@ from rmgarbage import Rmgarbage
 
 
 class improvingOCR:
+    def __init__(self):
+        pass
 
-	def __init__(self):
-		pass
+    def garbageDetector(filepath, is_filepath=False):
+        """Stores garbage text in text file provided by filepath in excel sheet.
+        Paramaters: filepath
+        File path to text file
+        is_file_content: 1 if first param is content, 0 if filepath
+        """
+        content = ""
+        if is_filepath:
+            fileName = (filepath).rsplit("/", 1)[-1]
+            with open(filepath) as file:
+                content = file.read()
 
-	def garbageDetector(filepath):
-		"""Stores garbage text in text file provided by filepath in excel sheet.
-		Paramaters: filepath
-		File path to text file
-		is_file_content: 1 if first param is content, 0 if filepath
-		"""
-		fileName = (filepath).rsplit('/', 1)[-1]
-	
+        else:
+            content = filepath
 
-		with open(filepath) as file:
-			content = file.read()
-			words = content.split()
-			garbagecount = 0
-			wordcount = 0
-			garbageWords = []
-			garbage = Rmgarbage()
-			garbage.__init__()
+        words = content.split()
+        garbagecount = 0
+        wordcount = 0
+        garbageWords = []
+        garbage = Rmgarbage()
+        garbage.__init__()
 
-			for word in words:
-				isGarbage = garbage.is_garbage(word)
-				wordcount += 1
-				if isGarbage != False:
-					garbageWords.append(word)
-					garbagecount += 1
+        for word in words:
+            isGarbage = garbage.is_garbage(word)
+            wordcount += 1
+            if isGarbage != False:
+                garbageWords.append(word)
+                garbagecount += 1
 
-		frequency = Counter(garbageWords)
-		stringWriter = fileName + '.xlsx'
+        frequency = Counter(garbageWords)
+        # stringWriter = fileName + '.xlsx'
 
-		# writer = pd.ExcelWriter(stringWriter, engine='xlsxwriter', engine_kwargs={
-		# 			'options': {'strings_to_formulas': False, 'strings_to_urls': False}})
-		df = pd.DataFrame.from_records(
-		frequency.most_common(), columns=['page', 'count'])
-		# df.to_excel(writer, sheet_name='Sheet1', index=False)
-		# writer.save()
+        # writer = pd.ExcelWriter(stringWriter, engine='xlsxwriter', engine_kwargs={
+        # 			'options': {'strings_to_formulas': False, 'strings_to_urls': False}})
+        df = pd.DataFrame.from_records(
+            frequency.most_common(), columns=["page", "count"]
+        )
+        # df.to_excel(writer, sheet_name='Sheet1', index=False)
+        # writer.save()
 
-		ratio = 0
+        ratio = 0
 
-		#account for divide by 0 error
-		if wordcount == 0:
-			ratio = 100
+        # account for divide by 0 error
+        if wordcount == 0:
+            ratio = 100
 
-		else:
-			ratio = 100 - ((garbagecount/wordcount) * 100)
-			ratio = int(ratio)
+        else:
+            ratio = 100 - ((garbagecount / wordcount) * 100)
+            ratio = int(ratio)
 
-		summary = [[fileName, wordcount, garbagecount, ratio]]
-		summaryTable = pd.DataFrame(summary, columns=[
-					"File Name", "Number of Words", "Number of Garbage Words", "Score"])
-		return summaryTable, df
-		
-	
-	def cli():
-		"""Process command line arguments."""
-		parser = argparse.ArgumentParser(description='Process OCR Output')
-		parser.add_argument('ocrFile')
-		args = parser.parse_args()
-		fileName = (filepath).rsplit('/', 1)[-1]
+        summary = [[wordcount, garbagecount, ratio]]
+        summaryTable = pd.DataFrame(
+            summary, columns=["Number of Words", "Number of Garbage Words", "Score"]
+        )
+        return summaryTable, df
 
-		with open(args.ocrFile) as file:
-			content = file.read()
-			words = content.split()
-			garbagecount = 0
-			wordcount = 0
-			garbageWords = []
-			garbage = Rmgarbage()
-			garbage.__init__()
+    def cli():
+        """Process command line arguments."""
+        parser = argparse.ArgumentParser(description="Process OCR Output")
+        parser.add_argument("ocrFile")
+        args = parser.parse_args()
+        fileName = (filepath).rsplit("/", 1)[-1]
 
-			for word in words:
-				isGarbage = garbage.is_garbage(word)
-				wordcount += 1
-				if isGarbage != False:
-					garbageWords.append(word)
-					garbagecount += 1
+        with open(args.ocrFile) as file:
+            content = file.read()
+            words = content.split()
+            garbagecount = 0
+            wordcount = 0
+            garbageWords = []
+            garbage = Rmgarbage()
+            garbage.__init__()
 
-			frequency = Counter(garbageWords)
+            for word in words:
+                isGarbage = garbage.is_garbage(word)
+                wordcount += 1
+                if isGarbage != False:
+                    garbageWords.append(word)
+                    garbagecount += 1
 
-			stringWriter = fileName + '.xlsx'
+            frequency = Counter(garbageWords)
 
-			# writer = pd.ExcelWriter(stringWriter, engine='xlsxwriter', engine_kwargs={
-			# 			'options': {'strings_to_formulas': False, 'strings_to_urls': False}})
+            stringWriter = fileName + ".xlsx"
 
-			df = pd.DataFrame.from_records(
-			frequency.most_common(), columns=['page', 'count'])
+            # writer = pd.ExcelWriter(stringWriter, engine='xlsxwriter', engine_kwargs={
+            # 			'options': {'strings_to_formulas': False, 'strings_to_urls': False}})
 
-			# df.to_excel(writer, sheet_name='Sheet1', index=False)
+            df = pd.DataFrame.from_records(
+                frequency.most_common(), columns=["page", "count"]
+            )
 
-			# writer.save()
+            # df.to_excel(writer, sheet_name='Sheet1', index=False)
 
-			ratio = 0
+            # writer.save()
 
-			if wordcount == 0:
-				ratio = 100
+            ratio = 0
 
-			else:
-				ratio = 100 - ((garbagecount/wordcount) * 100)
-				ratio = int(ratio)
+            if wordcount == 0:
+                ratio = 100
 
-			summary = [[fileName, wordcount, garbagecount, ratio]]
+            else:
+                ratio = 100 - ((garbagecount / wordcount) * 100)
+                ratio = int(ratio)
 
-			summaryTable = pd.DataFrame(summary, columns=[
-						"File Name", "Number of Words", "Number of Garbage Words", "Score"])
+            summary = [[fileName, wordcount, garbagecount, ratio]]
 
-			print(summaryTable)
-			print()
+            summaryTable = pd.DataFrame(
+                summary,
+                columns=[
+                    "File Name",
+                    "Number of Words",
+                    "Number of Garbage Words",
+                    "Score",
+                ],
+            )
+
+            print(summaryTable)
+            print()
